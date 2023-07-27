@@ -47,7 +47,7 @@ class Host
         $root = str_replace(strval($this->tld), '', strval($this->host));
         $root = explode('.', trim(strval($root), '.'));
 
-        $this->domain = end($root) . '.' . $this->tld;
+        $this->domain(end($root) . '.' . $this->tld);
 
         return $this;
     }
@@ -61,6 +61,11 @@ class Host
         $this->domain = $domain;
 
         return $this;
+    }
+
+    public function isValid(): bool
+    {
+        return !empty($this->tld());
     }
 
     public function toString(): string

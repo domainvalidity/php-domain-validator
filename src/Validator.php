@@ -25,8 +25,11 @@ class Validator
     {
         $host = new Host($host);
 
-        $parts = $host->exploded();
-        $host->tld($this->getTld($parts));
+        $tld = $this->getTld($host->exploded());
+
+        if ($this->verifyTld($tld)) {
+            $host->tld($tld);
+        }
 
         return $host;
     }
@@ -54,11 +57,22 @@ class Validator
         unset($parts[count($parts) - 1]);
 
         foreach ($this->publicSuffixList as $key => $item) {
-            if (strpos($item, $current) !== false) {
+            if (preg_match('/\b' . preg_quote($current) . '\b/i', $item) === 1) {
                 return $this->getTld($parts, $current);
             }
         }
 
         return strval($tld);
+    }
+
+    protected function verifyTld(string $tld): bool
+    {
+        foreach ($this->publicSuffixList as $key => $item) {
+            if (preg_match('/\b' . preg_quote($tld) . '\b/i', $item) === 1) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

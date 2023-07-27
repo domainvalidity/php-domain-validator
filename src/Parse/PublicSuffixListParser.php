@@ -15,6 +15,23 @@ class PublicSuffixListParser
         unset($list[0]);
         unset($list[count($list)]);
 
-        return array_values($list);
+        $list = array_values($list);
+
+        $fn = function (string $tld) {
+            return boolval(
+                preg_match(
+                    "/^([a-z\d](-*[a-z\d])*)(\.([a-z\d](-*[a-z\d])*))*$/i",
+                    $tld
+                )
+            );
+        };
+
+        foreach ($list as $key => $tld) {
+            if ($fn($tld) === false) {
+                unset($list[$key]);
+            }
+        }
+
+        return $list;
     }
 }

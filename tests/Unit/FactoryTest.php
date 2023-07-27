@@ -5,9 +5,7 @@ use DomainValidity\Validator;
 
 
 test('factory make', function () {
-    $validator = Factory::make(
-        getPublicSuffixListPath()
-    );
+    $validator = getInstance();
 
     expect($validator)->toBeInstanceOf(Validator::class);
 });
