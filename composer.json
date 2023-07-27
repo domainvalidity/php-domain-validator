@@ -1,0 +1,51 @@
+{
+    "name": "domainvalidity/php-domain-validator",
+    "description": "Light PHP package to validate domains.",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Adro Rocker",
+            "email": "me@adro.rocks"
+        }
+    ],
+    "require": {
+        "php": "^8.1.0"
+    },
+    "require-dev": {
+        "pestphp/pest": "^2.9",
+        "phpstan/phpstan": "^1.10",
+        "phpunit/phpunit": "^10.2",
+        "squizlabs/php_codesniffer": "^3.7"
+    },
+    "autoload": {
+        "psr-4": {
+            "DomainValidity\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "DomainValidity\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "check": [
+            "@cscheck",
+            "@phpstan",
+            "@test"
+        ],
+        "cscheck": "./vendor/bin/phpcs",
+        "csfix": "./vendor/bin/phpcbf",
+        "test": "./vendor/bin/pest",
+        "coverage": "XDEBUG_MODE=coverage ./vendor/bin/phpunit --coverage-html ./testbuild/logs/html && chmod a+x ./coverage && ./coverage",
+        "phpstan": "./vendor/bin/phpstan analyse"
+    },
+    "config": {
+        "preferred-install": "dist",
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "minimum-stability": "stable"
+}
