@@ -1,15 +1,18 @@
-# https://php.watch/articles/composer-gitattributes
+# Enforce Unix newlines
+* text=lf
 
-# Exclude build/test files from archive
+# Exclude unused files
+# see: https://redd.it/2jzp6k
 /.github          export-ignore
-/docs             export-ignore
+/data             export-ignore
 /tests            export-ignore
 /.editorconfig    export-ignore
 /.gitattributes   export-ignore
 /.gitignore       export-ignore
-/phpucs.xml       export-ignore
+/phpcs.xml        export-ignore
 /phpunit.xml      export-ignore
 /phpstan.neon     export-ignore
+/README.md        export-ignore
 
-# Configure diff output for .php and .phar files.
+# Configure diff output for .php files.
 *.php diff=php
