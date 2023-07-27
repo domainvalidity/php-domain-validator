@@ -21,31 +21,28 @@ class Validator
         return 'v' . self::VERSION . urlencode($key);
     }
 
-    /**
-     * @return array<string, bool|string>
-     */
-    public function validate(string $host): array
+    public function validate(string $host): Host
     {
         $host = new Host($host);
 
         $parts = $host->exploded();
         $host->tld($this->getTld($parts));
 
-        return $host->toArray();
+        return $host;
     }
 
     public function domain(string $host): string
     {
-        $info = $this->validate($host);
+        $host = $this->validate($host);
 
-        return strval($info['domain']);
+        return strval($host->domain());
     }
 
     public function tld(string $host): string
     {
-        $info = $this->validate($host);
+        $host = $this->validate($host);
 
-        return strval($info['tld']);
+        return strval($host->tld());
     }
 
     /**
