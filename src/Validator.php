@@ -6,7 +6,7 @@ use DomainValidity\Host\Host;
 
 class Validator
 {
-    public const VERSION = '0.1.0';
+    public const VERSION = '1.0.2';
 
     /**
      * @param array<string> $publicSuffixList
