@@ -1,5 +1,8 @@
 <?php
 
+use DomainValidity\Factory;
+use DomainValidity\Validator;
+
 /*
 |--------------------------------------------------------------------------
 | Test Case
@@ -43,4 +46,11 @@ function getPublicSuffixListPath(): string
 {
     return __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR .
         'data' . DIRECTORY_SEPARATOR . 'public_suffix_list.dat';
+}
+
+function getInstance(): Validator
+{
+    return Factory::make(
+        getPublicSuffixListPath()
+    );
 }
