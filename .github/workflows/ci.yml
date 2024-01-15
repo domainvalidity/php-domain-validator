@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - 1.x
+      - 2.x
+  pull_request:
+
+jobs:
+  test:
+    name: Test on PHP ${{ matrix.php-versions }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        php-versions: ['8.1', '8.2', '8.3']
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-versions }}
+          coverage: none
+
+      - name: Install composer and dependencies
+        uses: php-actions/composer@v6
+
+      - name: Run Code Sniffer
+        run: vendor/bin/phpcs
+
+      - name: Run phpstan
+        run: vendor/bin/phpstan analyse -c phpstan.neon --no-progress
+
+      - name: Run Pest
+        run: vendor/bin/pest
