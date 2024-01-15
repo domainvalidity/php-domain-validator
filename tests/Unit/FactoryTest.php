@@ -4,7 +4,7 @@ use DomainValidity\Factory;
 use DomainValidity\Validator;
 
 
-test('factory make', function () {
+test(Factory::class . '::make produce instance of ' . Validator::class, function () {
     $validator = getInstance();
 
     expect($validator)->toBeInstanceOf(Validator::class);

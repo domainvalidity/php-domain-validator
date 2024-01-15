@@ -11,18 +11,11 @@ class Host
         public ?string $host = null,
         public ?string $domain = null,
         public ?string $tld = null,
+        public ?bool $isPrivate = null,
     ) {
         $parsed = HostParser::parse($this->original);
 
         $this->host = strval($parsed['host']);
-    }
-
-    /**
-     * @return array<string>
-     */
-    public function exploded(): array
-    {
-        return explode('.', strval($this->host));
     }
 
     public function original(?string $original = null): string|self
@@ -68,6 +61,17 @@ class Host
         return !empty($this->tld());
     }
 
+    public function isPrivate(?bool $isPrivate = null): bool|self
+    {
+        if ($isPrivate === null) {
+            return $this->isPrivate ?? false;
+        }
+
+        $this->isPrivate = $isPrivate;
+
+        return $this;
+    }
+
     public function toString(): string
     {
         return strval($this->host);
@@ -84,6 +88,7 @@ class Host
             'host' => $this->toString(),
             'domain' => $this->domain(),
             'tld' => $this->tld(),
+            'private' => $this->isPrivate(),
         ];
     }
 

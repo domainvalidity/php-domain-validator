@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace DomainValidity\Parse;
 
 use InvalidArgumentException;
@@ -20,16 +22,7 @@ class HostParser
 
         $parts = parse_url($host);
 
-        $fn = function ($domainName) {
-            return boolval(
-                preg_match(
-                    "/^([a-z\d](-*[a-z\d])*)(\.([a-z\d](-*[a-z\d])*))*$/i",
-                    $domainName
-                )
-            );
-        };
-
-        if (!is_array($parts) || !isset($parts['host']) || !$fn($parts['host'])) {
+        if (!is_array($parts) || !isset($parts['host'])) {
             throw new InvalidArgumentException("Invalid host", 500);
         }
 

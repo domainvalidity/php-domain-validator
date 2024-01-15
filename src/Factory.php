@@ -11,15 +11,9 @@ class Factory
     /**
      * @throws InvalidArgumentException
      */
-    public static function make(string $datFile): Validator
+    public static function make(string $dotDatContent): Validator
     {
-        $content = file_get_contents($datFile);
-
-        if ($content === false) {
-            throw new InvalidArgumentException();
-        }
-
-        $publicSuffixList = PublicSuffixListParser::parse($content);
+        $publicSuffixList = PublicSuffixListParser::parse($dotDatContent);
 
         return new Validator($publicSuffixList);
     }

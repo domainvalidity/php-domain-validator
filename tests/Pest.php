@@ -42,15 +42,17 @@ use DomainValidity\Validator;
 |
 */
 
-function getPublicSuffixListPath(): string
+function getPublicSuffixListContent(): string
 {
-    return __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR .
-        'data' . DIRECTORY_SEPARATOR . 'public_suffix_list.dat';
+    $dotDatContent = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR .
+        'data' . DIRECTORY_SEPARATOR . 'public_suffix_list.dat');
+
+    return $dotDatContent === false ? '' : $dotDatContent;
 }
 
 function getInstance(): Validator
 {
     return Factory::make(
-        getPublicSuffixListPath()
+        getPublicSuffixListContent()
     );
 }
