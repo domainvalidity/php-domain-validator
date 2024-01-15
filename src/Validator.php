@@ -27,8 +27,10 @@ class Validator
 
         $tld = $this->getTld($host->exploded());
 
-        if ($this->verifyTld($tld)) {
-            $host->tld($tld);
+        if ($tld !== null) {
+            if ($this->verifyTld($tld)) {
+                $host->tld($tld);
+            }
         }
 
         return $host;
@@ -51,18 +53,18 @@ class Validator
     /**
      * @param array<string> $parts
      */
-    protected function getTld(array $parts, ?string $tld = null): string
+    protected function getTld(array $parts, bool $partialFound = false, ?string $tld = null): ?string
     {
         $current = end($parts) . ($tld ? ".{$tld}" : '');
         unset($parts[count($parts) - 1]);
 
         foreach ($this->publicSuffixList as $key => $item) {
             if (preg_match('/\b' . preg_quote($current) . '\b/i', $item) === 1) {
-                return $this->getTld($parts, $current);
+                return $this->getTld($parts, true, $current);
             }
         }
 
-        return strval($tld);
+        return $partialFound ? strval($tld) : null;
     }
 
     protected function verifyTld(string $tld): bool
