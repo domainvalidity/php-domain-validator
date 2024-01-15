@@ -33,7 +33,7 @@ jobs:
         run: vendor/bin/phpcs
 
       - name: Run phpstan
-        run: vendor/bin/phpstan analyse -c phpstan.neon --xdebug --no-progress
+        run: vendor/bin/phpstan analyse -c phpstan.neon --no-progress
 
       - name: Run Pest
         run: vendor/bin/pest
