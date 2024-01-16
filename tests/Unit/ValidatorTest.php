@@ -43,11 +43,12 @@ describe('Valid and private d-sd8krc91u2.execute-api.us-west-1.amazonaws.com', f
     it('is private', fn () =>  expect($host->isPrivate())->toBeTrue());
 });
 
-// describe('Invalid adro.is.a.rocker.and', function () {
-//     $validator = getInstance();
-//     $url = 'https://adro.is.a.rocker.and/he-rocks?or=not';
-//     $host = $validator->validate($url);
+describe('Invalid adro.is.a.rocker.and', function () {
+    $validator = getInstance();
+    $url = 'https://adro.is.a.rocker.and/he-rocks?or=not';
+    $host = $validator->validate($url);
 
-//     it('is not a valid domain', fn () =>  expect($host->isValid())->toBeFalse());
-//     it("is same as $url", fn () =>  expect($host->original())->toBe($url));
-// });
+    it('is not a valid domain', fn () =>  expect($host->isValid())->toBeFalse());
+    it('empty domain', fn () =>  expect($host->domain())->toBe(''));
+    it("is same as $url", fn () =>  expect($host->original())->toBe($url));
+});
