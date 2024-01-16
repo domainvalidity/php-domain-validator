@@ -83,7 +83,7 @@ class Host
     public function toArray(): array
     {
         return [
-            'valid' => !empty($this->tld()),
+            'valid' => $this->isValid(),
             'original' => $this->original(),
             'host' => $this->toString(),
             'domain' => $this->domain(),
