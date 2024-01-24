@@ -3,7 +3,6 @@
 namespace DomainValidity\Host;
 
 use DomainValidity\Parse\HostParser;
-use InvalidArgumentException;
 
 class Host
 {
