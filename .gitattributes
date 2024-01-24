@@ -3,13 +3,14 @@
 
 # Exclude unused files
 # see: https://redd.it/2jzp6k
+/.art             export-ignore
 /.github          export-ignore
 /data             export-ignore
 /tests            export-ignore
 /.editorconfig    export-ignore
 /.gitattributes   export-ignore
 /.gitignore       export-ignore
-/phpcs.xml.dist        export-ignore
+/phpcs.xml.dist   export-ignore
 /phpunit.xml      export-ignore
 /phpstan.neon     export-ignore
 /README.md        export-ignore
