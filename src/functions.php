@@ -23,3 +23,9 @@ function remove_empty_lines(string $text): ?string
 
     return $text;
 }
+
+function validate_domain_root(string $root): bool
+{
+    // Check if the string only contains alphanumeric values, dots or dashes
+    return preg_match('/^[a-zA-Z0-9.-]+$/', $root) === 1;
+}

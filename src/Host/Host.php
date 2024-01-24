@@ -3,6 +3,7 @@
 namespace DomainValidity\Host;
 
 use DomainValidity\Parse\HostParser;
+use InvalidArgumentException;
 
 class Host
 {
@@ -11,9 +12,10 @@ class Host
         public ?string $host = null,
         public ?string $domain = null,
         public ?string $tld = null,
+        private ?bool $isValid = null,
         public ?bool $isPrivate = null,
     ) {
-        $parsed = HostParser::parse($this->original);
+        $parsed = HostParser::parse(strtolower($this->original));
 
         $this->host = strval($parsed['host']);
     }
@@ -38,6 +40,11 @@ class Host
         $this->tld = $tld;
 
         $root = str_replace(strval($this->tld), '', strval($this->host));
+
+        if (!validate_domain_root(trim($root, '.'))) {
+            $this->isValid = false;
+        }
+
         $root = explode('.', trim(strval($root), '.'));
 
         $this->domain(end($root) . '.' . $this->tld);
@@ -58,7 +65,7 @@ class Host
 
     public function isValid(): bool
     {
-        return !empty($this->tld());
+        return $this->isValid ?? !empty($this->tld());
     }
 
     public function isPrivate(?bool $isPrivate = null): bool|self
