@@ -38,7 +38,10 @@ class Host
 
         $this->tld = $tld;
 
-        $root = str_replace(strval($this->tld), '', strval($this->host));
+        $escaped = str_replace('.', '\.', '.' . strval($this->tld));
+
+        /** @var string $root */
+        $root = preg_replace("/$escaped$/", '', strval($this->host));
 
         if (!validate_domain_root(trim($root, '.'))) {
             $this->isValid = false;

@@ -62,3 +62,19 @@ describe('Invalid *.adro.com', function () {
     it('is not empty domain', fn () =>  expect($host->domain())->toBe('adro.com'));
     it("is same as $url", fn () =>  expect($host->original())->toBe($url));
 });
+
+describe('Root domain is correctly obtained when the tld substring is contained in it', function () {
+    $validator = getInstance();
+    $url = 'a.b.c.compass.com';
+    $host = $validator->validate($url);
+
+    it("$url is valid domain", fn () => expect($host->isValid())->toBeTrue());
+    it("from $url - compass.com is the domain", fn () => expect($host->domain())->toBe('compass.com'));
+
+    $validator = getInstance();
+    $url = 'compass.com';
+    $host = $validator->validate($url);
+
+    it("$url is valid domain", fn () => expect($host->isValid())->toBeTrue());
+    it("from $url - compass.com is the domain", fn () => expect($host->domain())->toBe('compass.com'));
+});
