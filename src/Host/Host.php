@@ -38,7 +38,7 @@ class Host
 
         $this->tld = $tld;
 
-        $escaped = str_replace('.', '\.', '.' . strval($this->host));
+        $escaped = str_replace('.', '\.', '.' . strval($this->tld));
 
         /** @var string $root */
         $root = preg_replace("/$escaped$/", '', strval($this->host));
