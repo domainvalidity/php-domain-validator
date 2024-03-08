@@ -50,6 +50,20 @@ class Validator
             }
         }
 
+        if ($partialFound === false) {
+            $current = end($parts) . '.' . $current;
+            foreach ($this->publicSuffixList[$section] as $item) {
+                if ($current === $item) {
+                    return $this->getTld(
+                        parts: $parts,
+                        section: $section,
+                        partialFound: true,
+                        tld: $current,
+                    );
+                }
+            }
+        }
+
         return $partialFound ? strval($tld) : null;
     }
 

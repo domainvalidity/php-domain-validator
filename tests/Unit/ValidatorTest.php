@@ -53,6 +53,16 @@ describe('Invalid adro.is.a.rocker.and', function () {
     it("is same as $url", fn () =>  expect($host->original())->toBe($url));
 });
 
+describe('Valid claudiatreagus.co.za', function () {
+    $validator = getInstance();
+    $url = 'https://claudiatreagus.co.za/';
+    $host = $validator->validate($url);
+
+    it('is a valid domain', fn () =>  expect($host->isValid())->toBeTrue());
+    it('is same domain', fn () =>  expect($host->domain())->toBe('claudiatreagus.co.za'));
+    it("is same as $url", fn () =>  expect($host->original())->toBe($url));
+});
+
 describe('Invalid *.adro.com', function () {
     $validator = getInstance();
     $url = 'https://*.adro.com';
