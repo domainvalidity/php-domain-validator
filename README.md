@@ -8,6 +8,10 @@ Light PHP package to validate domains.
 
 [Doma(in)Validity](https://api.domainvalidity.dev/) was born because I found myself searching online about how to check if a domain was valid. I always ended up using regular expressions that were too complex to account for several scenarios (mainly the TLD having different formats), it was just a pain in the butt because I always had to go back to that code to fix the regex to account for an edge case that I didn't think about.
 
+### Requirements
+
+-  PHP >= 8.1.0
+
 ## Installation
 
 You can install the package via composer:
@@ -28,4 +32,4 @@ $validator = Factory::make($contents);
 $host = $validator->validate('www.domainvalidity.dev');
 ```
 
-> **Note:** You should cache the contents of the public suffix list and download them no more than once per day, as it is not updated   more than a few times per week; more frequent downloading is pointless.
+> **Note:** You should cache the contents of the public suffix list and download them no more than once per day, as it is not updated more than a few times per week; more frequent downloading is pointless.
