@@ -1,5 +1,6 @@
 {
     "name": "domainvalidity/php-domain-validator",
+    "version": "3.0.0",
     "description": "Light PHP package to validate domains.",
     "type": "library",
     "license": "MIT",
