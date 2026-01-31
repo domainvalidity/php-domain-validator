@@ -10,7 +10,8 @@ Light PHP package to validate domains.
 
 ### Requirements
 
--  PHP >= 8.1.0
+- PHP >= 8.2.0 (for v3.x)
+- PHP >= 8.1.0 (for v2.x)
 
 ## Installation
 
