@@ -8,7 +8,6 @@ use function explode;
 use function preg_match;
 use function remove_comments;
 use function remove_empty_lines;
-use function strval;
 use function trim;
 
 class PublicSuffixListParser
@@ -32,28 +31,74 @@ class PublicSuffixListParser
     }
 
     /**
-     * @return array<string, array<int, string>>
+     * Build a hierarchical nested map from domain lines.
+     * Each domain is split by '.', reversed, and stored in nested arrays.
+     * Uses '__end__' marker to indicate complete domain entries.
+     *
+     * @param array<string> $lines
+     * @return array<string, true|array<string, true|array<string, true|array<string, true|array>>>>
+     */
+    private static function buildHierarchicalMap(array $lines): array
+    {
+        $map = [];
+
+        foreach ($lines as $line) {
+            $line = trim($line);
+            if (empty($line)) {
+                continue;
+            }
+
+            // Split domain by '.' and reverse (e.g., 'com.mx' -> ['mx', 'com'])
+            $parts = array_reverse(explode('.', $line));
+
+            // Navigate/create nested structure
+            /** @var array<string, true|array<string, true|array<string, true|array<string, true|array>>>> $current */
+            $current = &$map;
+            foreach ($parts as $part) {
+                if (!isset($current[$part])) {
+                    $current[$part] = [];
+                }
+                /** @var array<string, true|array<string, true|array<string, true|array<string, true|array>>>> $current */
+                $current = &$current[$part];
+            }
+
+            // Mark this as a complete domain entry
+            $current['__end__'] = true;
+        }
+
+        return $map;
+    }
+
+    /**
+     * @return array<'icann'|'private',
+     *                array<string, true|array<string, true|array<string, true|array<string, true|array>>>>>
      */
     public static function parse(string $publicSuffixListString): array
     {
-        $icannSection = strval(self::getSection(self::ICANN_DELIMITER_PATTERN, $publicSuffixListString));
+        $icannSection = self::getSection(self::ICANN_DELIMITER_PATTERN, $publicSuffixListString);
 
-        $privateSection = strval(self::getSection(self::PRIVATE_DELIMITER_PATTERN, $publicSuffixListString));
+        $privateSection = self::getSection(self::PRIVATE_DELIMITER_PATTERN, $publicSuffixListString);
 
-        $icann = remove_empty_lines(
-            strval(remove_comments($icannSection))
-        );
+         $icann = remove_empty_lines(
+             (string) remove_comments($icannSection ?? '')
+         );
 
-        $private = remove_empty_lines(
-            strval(remove_comments($privateSection))
-        );
+         $private = remove_empty_lines(
+             (string) remove_comments($privateSection ?? '')
+         );
 
-        $icannLines = explode("\n", strval($icann));
-        $privateLines = explode("\n", strval($private));
+        $icannLines = explode("\n", $icann ?? '');
+        $privateLines = explode("\n", $private ?? '');
 
         unset($icannLines[0]);
         unset($privateLines[0]);
 
-        return ['icann' => array_values($icannLines), 'private' => array_values($privateLines)];
+        $icannLines = array_values($icannLines);
+        $privateLines = array_values($privateLines);
+
+        return [
+            'icann' => self::buildHierarchicalMap($icannLines),
+            'private' => self::buildHierarchicalMap($privateLines),
+        ];
     }
 }

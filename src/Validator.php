@@ -7,7 +7,9 @@ use DomainValidity\Host\Host;
 class Validator
 {
     /**
-     * @param array<string, array<int, string>> $publicSuffixList
+     * @param array<'icann'|'private'|string,array<string,true|array<string,true|array<string,
+     *     true|array<string,true|array>>>>> $publicSuffixList
+     * @phpstan-ignore-next-line
      */
     public function __construct(
         protected array $publicSuffixList,
@@ -18,7 +20,10 @@ class Validator
     {
         $host = new Host($host);
 
-        $tld = $this->getTld(explode('.', strval($host->toString())), 'icann');
+        $tld = $this->findTldInHierarchy(
+            explode('.', (string) $host->toString()),
+            $this->publicSuffixList['icann']
+        );
 
         if ($tld !== null) {
             $host->isPrivate(
@@ -32,47 +37,81 @@ class Validator
     }
 
     /**
-     * @param array<string> $parts
+     * Find TLD in hierarchical structure using iterative lookup.
+     * Traverses the hierarchy from right to left, checking each suffix.
+     * Returns the longest matching domain suffix.
+     *
+     * @param array<string> $parts Domain parts (e.g., ['www', 'adro', 'com', 'mx'])
+     * @param array<string, true|array<string, true|array<string, true|array<string, true|array>>>> $section
+     *              The hierarchical section
      */
-    protected function getTld(array $parts, string $section, bool $partialFound = false, ?string $tld = null): ?string
+    protected function findTldInHierarchy(array $parts, array $section): ?string
     {
-        $current = end($parts) . ($tld ? ".{$tld}" : '');
-        unset($parts[count($parts) - 1]);
+        if (empty($parts)) {
+            return null;
+        }
 
-        foreach ($this->publicSuffixList[$section] as $item) {
-            if ($current === $item) {
-                return $this->getTld(
-                    parts: $parts,
-                    section: $section,
-                    partialFound: true,
-                    tld: $current,
-                );
+        $longestMatch = null;
+        $reversed = array_reverse($parts);
+        $current = &$section;
+        $depth = 0;
+
+        // Traverse from rightmost (top-level domain) leftward
+        foreach ($reversed as $index => $part) {
+            if (!isset($current[$part])) {
+                // No match at this level, stop traversing
+                break;
+            }
+
+            $current = &$current[$part];
+            $depth++;
+
+            // If this level is marked as a complete domain, record it
+            if (isset($current['__end__'])) {
+                // Build the matched suffix by taking the rightmost 'depth' parts in original order
+                $suffix_parts = array_slice($reversed, 0, $depth);
+                $longestMatch = implode('.', array_reverse($suffix_parts));
             }
         }
 
-        if ($partialFound === false) {
-            $current = end($parts) . '.' . $current;
-            foreach ($this->publicSuffixList[$section] as $item) {
-                if ($current === $item) {
-                    return $this->getTld(
-                        parts: $parts,
-                        section: $section,
-                        partialFound: true,
-                        tld: $current,
-                    );
-                }
-            }
-        }
-
-        return $partialFound ? strval($tld) : null;
+        return $longestMatch;
     }
 
+    /**
+     * Check if host is in private domains list.
+     * Uses hierarchical lookup similar to getTld with wildcard support.
+     */
     protected function checkIfIsPrivate(string $host): bool
     {
-        foreach ($this->publicSuffixList['private'] as $item) {
-            if (strpos($host, trim($item, '*')) !== false) {
-                return true;
+        $parts = explode('.', $host);
+        $reversed = array_reverse($parts);
+        /** @var array<string, true|array<string, true|array<string, true|array<string, true|array>>>> $section */
+        $section = $this->publicSuffixList['private'];
+
+        $current = &$section;
+
+        // Traverse hierarchy from rightmost part
+        foreach ($reversed as $part) {
+            // Check for exact match
+            if (isset($current[$part])) {
+                if (isset($current[$part]['__end__'])) {
+                    return true;
+                }
+                $current = &$current[$part];
+                continue;
             }
+
+            // Check for wildcard match
+            if (isset($current['*'])) {
+                if (isset($current['*']['__end__'])) {
+                    return true;
+                }
+                $current = &$current['*'];
+                continue;
+            }
+
+            // No match found at this level
+            return false;
         }
 
         return false;
