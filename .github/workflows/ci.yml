@@ -17,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php-versions: ['8.1', '8.2', '8.3', '8.4']
+        php-versions: ['8.2', '8.3', '8.4']
 
     steps:
       - uses: actions/checkout@v3
@@ -30,10 +30,6 @@ jobs:
 
       - name: Install composer and dependencies
         uses: php-actions/composer@v6
-
-      - name: Upgrade Pest and PHPUnit for PHP 8.2+
-        if: matrix.php-versions != '8.1'
-        run: composer require --dev pestphp/pest:^3.0 phpunit/phpunit:^11.5 --no-interaction --update-no-dev
 
       - name: Run Code Sniffer
         run: vendor/bin/phpcs
