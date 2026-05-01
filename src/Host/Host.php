@@ -38,10 +38,17 @@ class Host
 
         $this->tld = $tld;
 
-        $escaped = str_replace('.', '\.', '.' . strval($this->tld));
+        $tldValue = strval($this->tld);
+        $hostValue = strval($this->host);
+        $suffix = '.' . $tldValue;
 
-        /** @var string $root */
-        $root = preg_replace("/$escaped$/", '', strval($this->host));
+        if ($hostValue === $tldValue) {
+            $root = '';
+        } elseif (str_ends_with($hostValue, $suffix)) {
+            $root = substr($hostValue, 0, -strlen($suffix));
+        } else {
+            $root = $hostValue;
+        }
 
         if (!validate_domain_root(trim($root, '.'))) {
             $this->isValid = false;

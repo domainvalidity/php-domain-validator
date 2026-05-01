@@ -2,35 +2,58 @@
     <img src="./.art/domainvalidity.png" width="200">
 </p>
 
-# Doma(in)Validity PHP package.
+# Doma(in)Validity PHP package
 
-Light PHP package to validate domains.
+Light PHP package to validate domains using the Mozilla
+[Public Suffix List](https://publicsuffix.org/).
 
-[Doma(in)Validity](https://api.domainvalidity.dev/) was born because I found myself searching online about how to check if a domain was valid. I always ended up using regular expressions that were too complex to account for several scenarios (mainly the TLD having different formats), it was just a pain in the butt because I always had to go back to that code to fix the regex to account for an edge case that I didn't think about.
+[Doma(in)Validity](https://api.domainvalidity.dev/) was born because the
+usual "validate a domain" regex grows new edge cases every time you
+look away — multi-level TLDs (`co.uk`, `com.mx`), IDN labels, private
+suffixes (`*.amazonaws.com`). This package outsources the hard part to
+the PSL.
 
-### Requirements
+## Requirements
 
-- PHP >= 8.2.0 (for v3.x)
-- PHP >= 8.1.0 (for v2.x)
+- PHP **>= 8.2.0** (for v3.x)
+- PHP **>= 8.1.0** (for v2.x)
 
 ## Installation
-
-You can install the package via composer:
 
 ```bash
 composer require domainvalidity/php-domain-validator
 ```
 
-## Usage
+## Quick start
 
 ```php
 use DomainValidity\Factory;
 
-$contents = file_get_contents('https://publicsuffix.org/list/public_suffix_list.dat');
-
-$validator = Factory::make($contents);
+$psl       = file_get_contents('path/to/public_suffix_list.dat');
+$validator = Factory::make($psl);
 
 $host = $validator->validate('www.domainvalidity.dev');
+
+$host->isValid();   // true
+$host->tld();       // 'dev'
+$host->domain();    // 'domainvalidity.dev'
+$host->toString();  // 'www.domainvalidity.dev'
 ```
 
-> **Note:** You should cache the contents of the public suffix list and download them no more than once per day, as it is not updated more than a few times per week; more frequent downloading is pointless.
+> Cache the Public Suffix List and refresh at most once per day. It is
+> updated only a few times per week, so more frequent fetching is
+> wasteful. See the usage guide below for a secure, cached fetch
+> pattern.
+
+## Documentation
+
+- **[`docs/USAGE.md`](docs/USAGE.md)** — full usage guide, secure PSL
+  fetching, caching strategy, complete API reference, worked examples,
+  and error-handling model.
+- **[`SECURITY.md`](SECURITY.md)** — supported versions and how to
+  report vulnerabilities.
+- **[`CHANGELOG.md`](CHANGELOG.md)** — release history.
+
+## License
+
+MIT — see [`LICENSE`](LICENSE).

@@ -5,6 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.1] - 2026-05-01
+
+### Security
+
+- `Host::tld()` no longer builds a PCRE pattern from a publicly-settable
+  value. The previous implementation only escaped `.` characters, so any
+  other PCRE metacharacter in the supplied TLD (e.g. `* + ? | ^ $ ( )
+  [ ] { } \`) was inserted into a dynamic regex unescaped, allowing
+  unintended match behavior, PCRE compile errors, and a small ReDoS
+  surface. The suffix is now removed with `str_ends_with` + `substr` —
+  no regex, nothing to escape.
+- `HostParser` now uses `str_starts_with` for scheme detection. The
+  previous `strpos(...) !== false` check matched the literals
+  `http://` / `https://` anywhere in the input, so URLs containing
+  those substrings in their path or query (e.g.
+  `evil.example.com/?u=http://x`) were mis-classified as
+  already-schemed and skipped the `http://` prefix needed by
+  `parse_url`.
+
+### Deprecated
+
+- **v3.0.0 is deprecated** due to the issues above. All consumers should
+  upgrade to **v3.0.1**. See `SECURITY.md` for the supported-versions
+  matrix.
+
+### Docs
+
+- New `docs/USAGE.md` — full usage guide, secure PSL fetch pattern,
+  caching strategy, complete API reference, worked examples, error
+  handling.
+- README slimmed down to a landing page that links to the usage guide,
+  security policy, and changelog.
+
 ## [3.0.0] - 2026-01-31
 
 ### Breaking Changes

@@ -13,8 +13,8 @@ class HostParser
      */
     public static function parse(string $host): array
     {
-        $isSchemePresent = strpos($host, 'https://') !== false ||
-            strpos($host, 'http://') !== false;
+        $isSchemePresent = str_starts_with($host, 'https://') ||
+            str_starts_with($host, 'http://');
 
         if (!$isSchemePresent) {
             $host = 'http://' . $host;
