@@ -30,7 +30,7 @@ jobs:
           coverage: none
 
       - name: Install composer and dependencies
-        uses: php-actions/composer@v6
+        run: composer install --no-interaction --no-progress --prefer-dist
 
       - name: Run Code Sniffer
         run: vendor/bin/phpcs
