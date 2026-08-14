@@ -48,6 +48,13 @@
         "sort-packages": true,
         "allow-plugins": {
             "pestphp/pest-plugin": true
+        },
+        "policy": {
+            "advisories": {
+                "ignore-id": [
+                    "PKSA-z3gr-8qht-p93v"
+                ]
+            }
         }
     },
     "minimum-stability": "stable"
