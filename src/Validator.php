@@ -18,63 +18,125 @@ class Validator
     {
         $host = new Host($host);
 
-        $tld = $this->getTld(explode('.', strval($host->toString())), 'icann');
+        $tld = $this->findPublicSuffix(
+            explode('.', strval($host->toString())),
+            $this->publicSuffixList['icann'] ?? []
+        );
 
         if ($tld !== null) {
             $host->isPrivate(
                 $this->checkIfIsPrivate($host->toString())
             );
-        }
 
-        $host->tld($tld);
+            $host->tld($tld);
+        }
 
         return $host;
     }
 
     /**
-     * @param array<string> $parts
+     * Resolve the public suffix for the given host parts using the
+     * Public Suffix List algorithm: among all matching rules the
+     * exception (`!`) rule prevails if present, otherwise the longest
+     * rule; wildcard (`*`) labels match any single label; an exception
+     * rule's suffix is the rule minus its leftmost label.
+     *
+     * @param array<string> $parts Host labels (e.g., ['www', 'adro', 'com', 'mx'])
+     * @param array<int, string> $rules Rule lines from one PSL section
      */
-    protected function getTld(array $parts, string $section, bool $partialFound = false, ?string $tld = null): ?string
+    protected function findPublicSuffix(array $parts, array $rules): ?string
     {
-        $current = end($parts) . ($tld ? ".{$tld}" : '');
-        unset($parts[count($parts) - 1]);
+        $match = $this->findPrevailingRule($parts, $rules);
 
-        foreach ($this->publicSuffixList[$section] as $item) {
-            if ($current === $item) {
-                return $this->getTld(
-                    parts: $parts,
-                    section: $section,
-                    partialFound: true,
-                    tld: $current,
-                );
-            }
+        if ($match === null) {
+            return null;
         }
 
-        if ($partialFound === false) {
-            $current = end($parts) . '.' . $current;
-            foreach ($this->publicSuffixList[$section] as $item) {
-                if ($current === $item) {
-                    return $this->getTld(
-                        parts: $parts,
-                        section: $section,
-                        partialFound: true,
-                        tld: $current,
-                    );
-                }
-            }
+        $depth = $match['exception'] ? $match['depth'] - 1 : $match['depth'];
+
+        if ($depth < 1) {
+            return null;
         }
 
-        return $partialFound ? strval($tld) : null;
+        return implode('.', array_slice($parts, -$depth));
     }
 
-    protected function checkIfIsPrivate(string $host): bool
+    /**
+     * Find the prevailing rule for the host among the section's rules.
+     *
+     * @param array<string> $parts Host labels
+     * @param array<int, string> $rules Rule lines from one PSL section
+     * @return array{depth: int, exception: bool}|null
+     */
+    protected function findPrevailingRule(array $parts, array $rules): ?array
     {
-        foreach ($this->publicSuffixList['private'] as $item) {
-            if (strpos($host, trim($item, '*')) !== false) {
-                return true;
+        if ($parts === [] || in_array('', $parts, true)) {
+            return null;
+        }
+
+        $best = null;
+
+        foreach ($rules as $rule) {
+            $rule = trim($rule);
+
+            if ($rule === '' || str_starts_with($rule, '//')) {
+                continue;
+            }
+
+            $exception = str_starts_with($rule, '!');
+            if ($exception) {
+                $rule = substr($rule, 1);
+            }
+
+            $ruleParts = explode('.', $rule);
+            $depth = count($ruleParts);
+
+            if ($rule === '' || $depth > count($parts)) {
+                continue;
+            }
+
+            if (!$this->ruleMatches($ruleParts, array_slice($parts, -$depth))) {
+                continue;
+            }
+
+            if (
+                $best === null
+                || ($exception && !$best['exception'])
+                || ($exception === $best['exception'] && $depth > $best['depth'])
+            ) {
+                $best = ['depth' => $depth, 'exception' => $exception];
             }
         }
 
-        return false;
+        return $best;
+    }
+
+    /**
+     * @param array<string> $ruleParts
+     * @param array<string> $hostParts Same length as $ruleParts
+     */
+    protected function ruleMatches(array $ruleParts, array $hostParts): bool
+    {
+        foreach ($ruleParts as $index => $label) {
+            if ($label !== '*' && $label !== $hostParts[$index]) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Check if host matches a rule in the private domains list.
+     * A matching `!` exception rule cancels the private classification.
+     */
+    protected function checkIfIsPrivate(string $host): bool
+    {
+        $match = $this->findPrevailingRule(
+            explode('.', $host),
+            $this->publicSuffixList['private'] ?? []
+        );
+
+        return $match !== null && !$match['exception'];
     }
 }
