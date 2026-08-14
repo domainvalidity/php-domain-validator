@@ -1,6 +1,5 @@
 {
     "name": "domainvalidity/php-domain-validator",
-    "version": "3.0.1",
     "description": "Light PHP package to validate domains.",
     "type": "library",
     "license": "MIT",
@@ -25,7 +24,8 @@
             "DomainValidity\\": "src/"
         },
         "files": [
-            "src/functions.php"
+            "src/functions.php",
+            "src/functions_global.php"
         ]
     },
     "autoload-dev": {
@@ -42,7 +42,8 @@
         "cscheck": "./vendor/bin/phpcs",
         "csfix": "./vendor/bin/phpcbf",
         "test": "./vendor/bin/pest",
-        "phpstan": "./vendor/bin/phpstan analyse"
+        "phpstan": "./vendor/bin/phpstan analyse",
+        "psl:update": "curl -fsSL https://publicsuffix.org/list/public_suffix_list.dat -o data/public_suffix_list.dat"
     },
     "config": {
         "preferred-install": "dist",

@@ -56,3 +56,9 @@ function getInstance(): Validator
         getPublicSuffixListContent()
     );
 }
+
+function makeList(string $icann, string $private = ''): string
+{
+    return "// ===BEGIN ICANN DOMAINS===\n{$icann}\n// ===END ICANN DOMAINS===\n"
+        . "// ===BEGIN PRIVATE DOMAINS===\n{$private}\n// ===END PRIVATE DOMAINS===\n";
+}

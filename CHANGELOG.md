@@ -5,6 +5,51 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.0] - 2026-08-14
+
+### Security / Fixed
+
+- **Public Suffix List wildcard (`*`) and exception (`!`) rules are now
+  fully supported** in the ICANN section (the private section gains `!`
+  support too). Previously `findTldInHierarchy` only did exact-label
+  lookups, so the PSL's 200+ wildcard rules (`*.ck`,
+  `*.compute.amazonaws.com`, …) and 8 exception rules (`!www.ck`, …)
+  were ignored and consumers could derive a wrong registrable domain —
+  a hazard for cookie scoping and host allowlisting.
+- **Non-http schemes now throw** `InvalidArgumentException` instead of
+  mis-parsing. `ftp://example.com` used to be prefixed to
+  `http://ftp://example.com` and yielded the host `ftp`.
+- **UTF-8 rule lines are no longer corrupted while parsing the PSL.**
+  Section content is now split on `\r\n`/`\r`/`\n` explicitly; the
+  previous logic could split inside multi-byte labels containing a
+  `0x85` byte (e.g. `嘉里大酒店`).
+- The internal end-of-rule marker now contains a NUL byte, so a
+  crafted PSL line can no longer collide with it; rule lines containing
+  NUL bytes are discarded.
+
+### Changed (potentially breaking for edge cases)
+
+- The helper functions `remove_comments()`, `remove_empty_lines()` and
+  `validate_domain_root()` moved to `DomainValidity\Support\`. The old
+  global names remain available as deprecated `function_exists`-guarded
+  shims (`src/functions_global.php`), so existing callers keep working
+  and the fatal redeclaration risk when a consumer app defines
+  same-named globals is gone. The shims will be removed in v4.0.
+- `Factory` is now `final` (matching the documented API).
+- The `InvalidArgumentException` thrown by `HostParser` no longer
+  carries the misleading exception code `500`.
+
+### Added
+
+- `composer psl:update` script to refresh the bundled test-only PSL
+  snapshot from publicsuffix.org.
+- Dependabot configuration for Composer and GitHub Actions.
+- CI now runs on pushes to the `3.x` branch; `actions/checkout` bumped
+  to v4; PHPCS now also lints `tests/`.
+- Test coverage for the PSL parser, helper functions, wildcard and
+  exception rules, and parser edge cases (ports, userinfo, IP
+  literals, trailing dots, empty input).
+
 ## [3.0.1] - 2026-05-01
 
 ### Security

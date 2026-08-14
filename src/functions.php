@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+namespace DomainValidity\Support;
+
 function remove_comments(string $text): ?string
 {
     // Remove single-line comments
@@ -11,7 +13,6 @@ function remove_comments(string $text): ?string
         // Remove multi-line comments
         $text = preg_replace('/\/\*(.*?)\*\//s', '', $text);
     }
-
 
     return $text;
 }

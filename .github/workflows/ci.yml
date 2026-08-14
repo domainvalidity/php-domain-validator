@@ -7,6 +7,7 @@ on:
       - main
       - 1.x
       - 2.x
+      - 3.x
   pull_request:
 
 jobs:
@@ -20,7 +21,7 @@ jobs:
         php-versions: ['8.2', '8.3', '8.4']
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -29,7 +30,7 @@ jobs:
           coverage: none
 
       - name: Install composer and dependencies
-        uses: php-actions/composer@v6
+        run: composer install --no-interaction --no-progress --prefer-dist
 
       - name: Run Code Sniffer
         run: vendor/bin/phpcs

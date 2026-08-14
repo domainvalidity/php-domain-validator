@@ -20,6 +20,12 @@
   path/query. Both are fixed in **v3.0.1**. We recommend upgrading
   immediately. No exploit details are published; see `CHANGELOG.md`
   for the high-level description.
+- **v3.0.x (hardening in v3.1.0)** — Public Suffix List wildcard (`*`)
+  and exception (`!`) rules were ignored during suffix resolution, so
+  hosts under wildcard suffixes (e.g. `*.ck`) could resolve a wrong
+  registrable domain — relevant if you use the result for cookie
+  scoping or host allowlisting. Non-http schemes (`ftp://…`) were also
+  silently mis-parsed instead of rejected. Fixed in **v3.1.0**.
 
 ## Reporting a Vulnerability
 

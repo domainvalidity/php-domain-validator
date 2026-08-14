@@ -4,6 +4,8 @@ namespace DomainValidity\Host;
 
 use DomainValidity\Parse\HostParser;
 
+use function DomainValidity\Support\validate_domain_root;
+
 class Host
 {
     public function __construct(
