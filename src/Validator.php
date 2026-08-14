@@ -3,6 +3,7 @@
 namespace DomainValidity;
 
 use DomainValidity\Host\Host;
+use DomainValidity\Parse\PublicSuffixListParser;
 
 class Validator
 {
@@ -20,100 +21,132 @@ class Validator
     {
         $host = new Host($host);
 
-        $tld = $this->findTldInHierarchy(
-            explode('.', (string) $host->toString()),
-            $this->publicSuffixList['icann']
-        );
+        $parts = explode('.', $host->toString());
+
+        $tld = $this->findPublicSuffix($parts, $this->publicSuffixList['icann'] ?? []);
 
         if ($tld !== null) {
             $host->isPrivate(
-                $this->checkIfIsPrivate($host->toString())
+                $this->checkIfIsPrivate($parts)
             );
-        }
 
-        $host->tld($tld);
+            $host->tld($tld);
+        }
 
         return $host;
     }
 
     /**
-     * Find TLD in hierarchical structure using iterative lookup.
-     * Traverses the hierarchy from right to left, checking each suffix.
-     * Returns the longest matching domain suffix.
+     * Resolve the public suffix for the given host parts using the
+     * Public Suffix List algorithm: among all matching rules the
+     * exception rule prevails if present, otherwise the longest rule;
+     * an exception rule's suffix is the rule minus its leftmost label.
      *
      * @param array<string> $parts Domain parts (e.g., ['www', 'adro', 'com', 'mx'])
      * @param array<string, true|array<string, true|array<string, true|array<string, true|array>>>> $section
-     *              The hierarchical section
      */
-    protected function findTldInHierarchy(array $parts, array $section): ?string
+    protected function findPublicSuffix(array $parts, array $section): ?string
     {
         if (empty($parts)) {
             return null;
         }
 
-        $longestMatch = null;
         $reversed = array_reverse($parts);
-        $current = &$section;
-        $depth = 0;
 
-        // Traverse from rightmost (top-level domain) leftward
-        foreach ($reversed as $index => $part) {
-            if (!isset($current[$part])) {
-                // No match at this level, stop traversing
-                break;
-            }
+        $match = $this->findPrevailingRule($reversed, $section);
 
-            $current = &$current[$part];
-            $depth++;
-
-            // If this level is marked as a complete domain, record it
-            if (isset($current['__end__'])) {
-                // Build the matched suffix by taking the rightmost 'depth' parts in original order
-                $suffix_parts = array_slice($reversed, 0, $depth);
-                $longestMatch = implode('.', array_reverse($suffix_parts));
-            }
+        if ($match === null) {
+            return null;
         }
 
-        return $longestMatch;
+        $depth = $match['exception'] ? $match['depth'] - 1 : $match['depth'];
+
+        if ($depth < 1) {
+            return null;
+        }
+
+        return implode('.', array_reverse(array_slice($reversed, 0, $depth)));
     }
 
     /**
-     * Check if host is in private domains list.
-     * Uses hierarchical lookup similar to getTld with wildcard support.
+     * Find the prevailing rule for the host in a hierarchical section.
+     * Explores both the literal label and the `*` wildcard at each level,
+     * since the Public Suffix List matches every rule independently.
+     *
+     * @param array<string> $reversed Host labels, rightmost first
+     * @param array<string, true|array<string, true|array<string, true|array<string, true|array>>>> $section
+     * @return array{depth: int, exception: bool}|null
      */
-    protected function checkIfIsPrivate(string $host): bool
+    protected function findPrevailingRule(array $reversed, array $section, int $index = 0): ?array
     {
-        $parts = explode('.', $host);
-        $reversed = array_reverse($parts);
-        /** @var array<string, true|array<string, true|array<string, true|array<string, true|array>>>> $section */
-        $section = $this->publicSuffixList['private'];
-
-        $current = &$section;
-
-        // Traverse hierarchy from rightmost part
-        foreach ($reversed as $part) {
-            // Check for exact match
-            if (isset($current[$part])) {
-                if (isset($current[$part]['__end__'])) {
-                    return true;
-                }
-                $current = &$current[$part];
-                continue;
-            }
-
-            // Check for wildcard match
-            if (isset($current['*'])) {
-                if (isset($current['*']['__end__'])) {
-                    return true;
-                }
-                $current = &$current['*'];
-                continue;
-            }
-
-            // No match found at this level
-            return false;
+        if (!isset($reversed[$index]) || $reversed[$index] === '') {
+            return null;
         }
 
-        return false;
+        $best = null;
+
+        $keys = $reversed[$index] === '*' ? ['*'] : [$reversed[$index], '*'];
+
+        foreach ($keys as $key) {
+            if (!isset($section[$key]) || !is_array($section[$key])) {
+                continue;
+            }
+
+            $child = $section[$key];
+            $candidate = null;
+
+            if (isset($child[PublicSuffixListParser::RULE_EXCEPTION])) {
+                $candidate = ['depth' => $index + 1, 'exception' => true];
+            } elseif (isset($child[PublicSuffixListParser::RULE_END])) {
+                $candidate = ['depth' => $index + 1, 'exception' => false];
+            }
+
+            $deeper = $this->findPrevailingRule($reversed, $child, $index + 1);
+
+            $best = $this->prevailing($best, $this->prevailing($candidate, $deeper));
+        }
+
+        return $best;
+    }
+
+    /**
+     * Pick the prevailing rule between two candidates: an exception rule
+     * beats any non-exception rule; otherwise the longer rule wins.
+     *
+     * @param array{depth: int, exception: bool}|null $a
+     * @param array{depth: int, exception: bool}|null $b
+     * @return array{depth: int, exception: bool}|null
+     */
+    protected function prevailing(?array $a, ?array $b): ?array
+    {
+        if ($a === null) {
+            return $b;
+        }
+
+        if ($b === null) {
+            return $a;
+        }
+
+        if ($a['exception'] !== $b['exception']) {
+            return $a['exception'] ? $a : $b;
+        }
+
+        return $b['depth'] > $a['depth'] ? $b : $a;
+    }
+
+    /**
+     * Check if host matches a rule in the private domains section.
+     * A matching `!` exception rule cancels the private classification.
+     *
+     * @param array<string> $parts Domain parts
+     */
+    protected function checkIfIsPrivate(array $parts): bool
+    {
+        /** @var array<string, true|array<string, true|array<string, true|array<string, true|array>>>> $section */
+        $section = $this->publicSuffixList['private'] ?? [];
+
+        $match = $this->findPrevailingRule(array_reverse($parts), $section);
+
+        return $match !== null && !$match['exception'];
     }
 }

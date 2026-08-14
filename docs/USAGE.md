@@ -54,7 +54,13 @@ $host->isPrivate(); // false (true for entries in the PSL "PRIVATE DOMAINS" sect
 
 `validate()` accepts plain hostnames *or* full URLs. The scheme,
 userinfo, port, path, query, and fragment are all stripped — only the
-host portion is validated.
+host portion is validated. Only `http://` and `https://` schemes are
+accepted; any other explicit scheme (`ftp://`, `file://`, …) throws an
+`\InvalidArgumentException`.
+
+Wildcard (`*.ck`) and exception (`!www.ck`) rules from the PSL are
+fully supported: `foo.bar.ck` resolves the suffix `bar.ck`, while
+`www.ck` resolves `ck` because the exception rule prevails.
 
 ---
 
@@ -174,7 +180,8 @@ class Validator
   URL with scheme/path/query.
 - **Returns** — a `Host` instance describing the parsed input.
 - **Throws** — `\InvalidArgumentException` if the input cannot be parsed
-  as a URL/host (e.g. an empty string or `http://`).
+  as a URL/host (e.g. an empty string or `http://`), or if it carries a
+  scheme other than `http`/`https`.
 
 ### `Host`
 
@@ -206,6 +213,14 @@ argument to read, call with an argument to mutate and chain.
 `isValid()` returns `true` if a TLD from the PSL was matched **and**
 the remaining root passes a basic charset check
 (`/^[a-zA-Z0-9.-]+$/`).
+
+**IDN note:** the root charset check is ASCII-only. Unicode public
+suffixes (e.g. `嘉里大酒店`) are matched, but a Unicode *root* label
+(e.g. `例え.jp`) is flagged invalid. For internationalized roots,
+convert the host to punycode first (`idn_to_ascii()`, requires the
+`intl` extension) before calling `validate()`. Lowercasing of the
+input is byte-wise (`strtolower`), which leaves multi-byte UTF-8
+labels untouched — uppercase Unicode input is not normalized.
 
 `isPrivate()` is `true` for hosts that fall under a private suffix
 (e.g. `*.amazonaws.com`, `*.github.io`).
@@ -296,6 +311,8 @@ if (!$host->isValid()) {
   not that the domain is registered, reachable, or trustworthy.
 - Always refresh the Public Suffix List (we recommend daily). Stale
   PSL data leads to false negatives (new TLDs not recognized) and
-  false positives (deprecated entries treated as live).
+  false positives (deprecated entries treated as live). The bundled
+  `data/public_suffix_list.dat` is used **only by the test suite**;
+  contributors can refresh it with `composer psl:update`.
 - See [`SECURITY.md`](../SECURITY.md) for the package's supported
   versions and how to report vulnerabilities responsibly.
